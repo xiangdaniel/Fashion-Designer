@@ -56,10 +56,7 @@ def train():
 
     cudnn.benchmark = True
 
-    if torch.cuda.is_available() and not opt.cuda:
-        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
-
-    # Define the training-dataloader and test-dataloader
+    # Define the dataloader
     if opt.dataset in ['data', 'folder', 'local']:
         # folder dataset, './data'
         transform = transforms.Compose([transforms.Resize(opt.imageSize),  # 224
@@ -72,7 +69,10 @@ def train():
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batchSize,
                                              shuffle=True, num_workers=int(opt.workers))
 
-    device = torch.device("cuda:0" if opt.cuda else "cpu")
+    # set GPU
+    if torch.cuda.is_available() and not opt.cuda:
+        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
+    # device = torch.device("cuda:0" if opt.cuda else "cpu")
     ngpu = int(opt.ngpu)
     nz = int(opt.nz)
     ngf = int(opt.ngf)
@@ -89,6 +89,7 @@ def train():
             m.weight.data.normal_(1.0, 0.02)
             m.bias.data.fill_(0)
 
+    # set the generator
     if opt.noBN:
         netG = dcgan.DCGAN_G_nobn(opt.imageSize, nz, nc, ngf, ngpu, n_extra_layers)
     else:
@@ -99,6 +100,7 @@ def train():
         netG.load_state_dict(torch.load(opt.netG))
     print(netG)
 
+    # set the discriminator
     netD = dcgan.DCGAN_D(opt.imageSize, nz, nc, ndf, ngpu, n_extra_layers)
     netD.apply(weights_init)
 
@@ -207,7 +209,7 @@ def train():
     print('Finished Training')
 
     # TODO: test
-    
+
     print("debug")
     nb_cuda = torch.cuda.device_count()
     print('We used ', nb_cuda, 'GPUs')
