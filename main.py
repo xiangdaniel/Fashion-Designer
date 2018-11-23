@@ -2,6 +2,10 @@ import argparse
 import os
 import random
 import time
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy as sp
+from scipy import signal
 import torch
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
@@ -18,16 +22,16 @@ import models.fashion_dcgan as dcgan
 def train():
     # Define the parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', required=True, help='data | folder | local')
+    parser.add_argument('--dataset', required=True, help='localdata | folder | local')
     parser.add_argument('--dataroot', required=True, help='path to dataset')
     parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
     parser.add_argument('--batchSize', type=int, default=64, help='input batch size')
     parser.add_argument('--imageSize', type=int, default=64, help='the height / width of the input image to network')
     parser.add_argument('--nc', type=int, default=3, help='input image channels')
     parser.add_argument('--nz', type=int, default=100, help='size of the latent z vector')
-    parser.add_argument('--ngf', type=int, default=64)
-    parser.add_argument('--ndf', type=int, default=64)
-    parser.add_argument('--niter', type=int, default=25, help='number of epochs to train for')
+    parser.add_argument('--ngf', type=int, default=64, help='number of gen filters in first conv layer')
+    parser.add_argument('--ndf', type=int, default=64, help='number of discrim filters in first conv layer')
+    parser.add_argument('--nEpoch', type=int, default=25, help='number of epochs for training')
     parser.add_argument('--lrD', type=float, default=0.00005, help='learning rate for Critic, default=0.00005')
     parser.add_argument('--lrG', type=float, default=0.00005, help='learning rate for Generator, default=0.00005')
     parser.add_argument('--beta1', type=float, default=0.5, help='beta1 for adam. default=0.5')
@@ -57,9 +61,9 @@ def train():
     cudnn.benchmark = True
 
     # Define the dataloader
-    if opt.dataset in ['data', 'folder', 'local']:
+    if opt.dataset in ['localdata', 'folder', 'local']:
         # folder dataset, './data'
-        transform = transforms.Compose([transforms.Resize(opt.imageSize),  # 224
+        transform = transforms.Compose([transforms.Resize(opt.imageSize),  # 64 or 224
                                         transforms.CenterCrop(opt.imageSize),
                                         transforms.ToTensor(),
                                         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
@@ -130,6 +134,8 @@ def train():
         optimizerG = optim.RMSprop(netG.parameters(), lr=opt.lrG)
 
     # Do the training
+    loss_D_all = []
+    loss_G_all = []
     gen_iterations = 0
     for epoch in range(opt.niter):
         data_iter = iter(dataloader)
@@ -177,6 +183,7 @@ def train():
                 errD_fake.backward(mone)
                 errD = errD_real - errD_fake
                 optimizerD.step()
+            loss_D_all.append(-errD.data[0])
 
             # (2) Update G network
             for p in netD.parameters():
@@ -191,6 +198,7 @@ def train():
             errG.backward(one)
             optimizerG.step()
             gen_iterations += 1
+            loss_G_all.append(-errG.data[0])
 
             print('[%d/%d][%d/%d][%d] Loss_D: %f Loss_G: %f Loss_D_real: %f Loss_D_fake %f'
                   % (epoch, opt.niter, i, len(dataloader), gen_iterations,
@@ -203,14 +211,28 @@ def train():
                 vutils.save_image(fake.data, '{0}/fake_samples_{1}.png'.format(opt.experiment, gen_iterations))
 
         # do checkpointing
-        torch.save(netG.state_dict(), '{0}/netG_epoch_{1}.pth'.format(opt.experiment, epoch))
-        torch.save(netD.state_dict(), '{0}/netD_epoch_{1}.pth'.format(opt.experiment, epoch))
+        if epoch % 100 == 0:
+            torch.save(netG.state_dict(), '{0}/netG_epoch_{1}.pth'.format(opt.experiment, epoch))
+            torch.save(netD.state_dict(), '{0}/netD_epoch_{1}.pth'.format(opt.experiment, epoch))
 
     print('Finished Training')
 
-    # TODO: test
+    # plot the validation loss with epoches
+    med_filtered_loss_D = sp.signal.medfilt(np.asarray(loss_D_all, dtype='float64'), 101)
+    med_filtered_loss_G = sp.signal.medfilt(np.asarray(loss_G_all, dtype='float64'), 101)
+    plt.figure()
+    plt.subplot(2, 1, 1)
+    plt.plot(med_filtered_loss_D)
+    plt.title('DCGAN Estimate')
+    plt.ylabel('Loss of Discriminator')
+    plt.xlabel('Generator Iterations')
+    plt.subplot(2, 1, 2)
+    plt.plot(med_filtered_loss_G)
+    plt.title('DCGAN Estimate')
+    plt.ylabel('Loss of Generator')
+    plt.xlabel('Generator Iterations')
+    plt.show()
 
-    print("debug")
     nb_cuda = torch.cuda.device_count()
     print('We used ', nb_cuda, 'GPUs')
 
