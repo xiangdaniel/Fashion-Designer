@@ -17,7 +17,8 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 
 import models.fashion_dcgan as dcgan
-
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def train():
     # Define the parameters
@@ -137,7 +138,7 @@ def train():
     loss_D_all = []
     loss_G_all = []
     gen_iterations = 0
-    for epoch in range(opt.niter):
+    for epoch in range(opt.nEpoch):
         data_iter = iter(dataloader)
         i = 0
         while i < len(dataloader):
@@ -201,7 +202,7 @@ def train():
             loss_G_all.append(-errG.data[0])
 
             print('[%d/%d][%d/%d][%d] Loss_D: %f Loss_G: %f Loss_D_real: %f Loss_D_fake %f'
-                  % (epoch, opt.niter, i, len(dataloader), gen_iterations,
+                  % (epoch, opt.nEpoch, i, len(dataloader), gen_iterations,
                      errD.data[0], errG.data[0], errD_real.data[0], errD_fake.data[0]))
             if gen_iterations % 500 == 0:
                 real_cpu = real_cpu.mul(0.5).add(0.5)
