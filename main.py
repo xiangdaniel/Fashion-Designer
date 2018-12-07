@@ -1,8 +1,5 @@
 import os
-import sys
 import random
-import math
-import numpy as np
 import skimage.io
 import matplotlib
 import matplotlib.pyplot as plt
@@ -161,6 +158,7 @@ def main(batch_size, fps, num_change):
 
     # Get all image file paths to a list.
     images = list(glob.iglob(os.path.join(VIDEO_SAVE_DIR, '*.*')))
+    
     # Sort the images by name index.
     images = sorted(images, key=lambda x: float(os.path.split(x)[1][:-3]))
 
