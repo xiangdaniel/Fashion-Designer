@@ -1,1 +1,4 @@
-# Fashion-Designer
+# AI Fashion Designer
+
+## abstract
+Fashion is an interesting domain which requires a lot of creativity. We present a work of Artificial Intelligence (AI) fashion designer, which generates innovative, original and unconventional fashion patterns and transfers them onto desired accessories. Our framework first uses the deep convolutional generative adversarial network (DCGAN)[1] which is trained to learn the design of fashion patterns. We further apply the pattern to the target item with the Mask R-CNN [2] to achieve the virtual try-on task and this network is trained to learn object instance segmentation. Experiments demonstrate its promise in both fashion pattern design and the virtual try-on tasks in image and real-time videos using state-of-the-art frameworks. We hope our elegant and effective machine-learning pipeline will serve as a solid baseline for future fashion design product in industry.  Demo is available at [YouTube](https://youtu.be/5h-e8PFMUtg)
