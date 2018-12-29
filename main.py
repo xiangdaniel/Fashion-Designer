@@ -104,7 +104,7 @@ def main(batch_size, fps, num_change):
     file_names = next(os.walk(fashion_dir))[2]
     fashion_name = os.path.join(fashion_dir, random.choice(file_names))
 
-    capture = cv2.VideoCapture(os.path.join(VIDEO_DIR, 'IMG_0751.MOV'))
+    capture = cv2.VideoCapture(os.path.join(VIDEO_DIR, 'umbrella.mp4'))
     # Find OpenCV version
     (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
 
@@ -131,6 +131,7 @@ def main(batch_size, fps, num_change):
             fashion_name = os.path.join(fashion_dir, random.choice(file_names))
 
         ret, frame = capture.read()
+        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         # Bail out when the video file ends
         if not ret:
@@ -158,7 +159,7 @@ def main(batch_size, fps, num_change):
 
     # Get all image file paths to a list.
     images = list(glob.iglob(os.path.join(VIDEO_SAVE_DIR, '*.*')))
-    
+
     # Sort the images by name index.
     images = sorted(images, key=lambda x: float(os.path.split(x)[1][:-3]))
 
