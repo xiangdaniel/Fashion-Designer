@@ -84,5 +84,4 @@ if __name__ == '__main__':
     model_structure = dcgan.DCGAN_G(opt.imageSize, nz, nc, ngf, ngpu, n_extra_layers)
     model = load_network(model_structure)
     model = model.cuda()
-
     generate_img(model)
